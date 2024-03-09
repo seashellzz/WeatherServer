@@ -20,6 +20,10 @@ public partial class City
 
     public int CountryId { get; set; }
 
+    public required string Name { get; set; }
+
+    public int Population { get; set; }
+
     [ForeignKey("CityId")]
     [InverseProperty("City")]
     public virtual Country CityNavigation { get; set; } = null!;
