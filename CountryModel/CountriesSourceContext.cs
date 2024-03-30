@@ -25,7 +25,7 @@ public partial class CountriesSourceContext : DbContext
         if (optionsBuilder.IsConfigured) {
             return;
         }
-        IConfigurationBuilder builder = new ConfigurationBuilder().AddJsonFile("appserrings.json");
+        IConfigurationBuilder builder = new ConfigurationBuilder().AddJsonFile("appsettings.json");
         var config = builder.Build();
         optionsBuilder.UseSqlServer(config.GetConnectionString("DefaultConnection"));
     }
@@ -39,9 +39,7 @@ public partial class CountriesSourceContext : DbContext
 
             entity.Property(e => e.CityId).ValueGeneratedOnAdd();
 
-            entity.HasOne(d => d.CityNavigation).WithOne(p => p.City)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_City_Country");
+            
         });
 
         modelBuilder.Entity<Country>(entity =>
