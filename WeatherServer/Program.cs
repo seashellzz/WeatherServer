@@ -1,5 +1,9 @@
 using CountryModel;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using WeatherServer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,8 +14,32 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<CountriesSourceContext>(options => 
+builder.Services.AddDbContext<CountriesGoldenContext>(options => 
 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddIdentity<WorldCityUser, IdentityRole>()
+    .AddEntityFrameworkStores<CountriesGoldenContext>();
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}
+).AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new()
+    {
+        RequireExpirationTime = true,
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+
+        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(
+            builder.Configuration["JwtSettings:SecurityKey"] ?? throw new InvalidOperationException()))
+    };
+});
+builder.Services.AddScoped<jwtHandler>();
 
 var app = builder.Build();
 
@@ -23,7 +51,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors(options => options.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
